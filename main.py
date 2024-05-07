@@ -360,9 +360,9 @@ def main(window):
     
     fires = [Fire(4*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(5*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(7*block_size+32,HEIGHT - block_size - 64, 16, 32 ),
              Fire(8*block_size+32,HEIGHT - block_size - 64, 16, 32 ),Fire(22*block_size+32,HEIGHT - block_size*6 - 64, 16, 32 )]
-    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(1, (WIDTH * 3) // block_size)]
+    floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(1, (WIDTH * 5) // block_size)]
     wall = [Brick(0, i * block_size, block_size) for i in range(HEIGHT // block_size)]
-    end_wall = [Brick(block_size * 31, i * block_size, block_size) for i in range(HEIGHT // block_size)]
+    end_wall = [Brick(block_size * 52, i * block_size, block_size) for i in range(HEIGHT // block_size)]
     blocks = [  Block(3*block_size, HEIGHT - block_size*2 , block_size), Block(6*block_size, HEIGHT - block_size*4, block_size) , Block(9*block_size, HEIGHT - block_size*4, block_size) ,
                 Block(10*block_size, HEIGHT - block_size*4, block_size), Block(11*block_size, HEIGHT - block_size*4, block_size), Block(13*block_size, HEIGHT - block_size*6, block_size),
                 Block(16*block_size, HEIGHT - block_size*7, block_size), Block(18*block_size, HEIGHT - block_size*5, block_size), Block(19*block_size, HEIGHT - block_size*5, block_size), 
