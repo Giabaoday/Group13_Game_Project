@@ -427,19 +427,24 @@ def main(window):
     player2 = Player(startPos[0], startPos[1], 50, 50, "PinkMan")
     mushroom = Mushroom(10*block_size + 16, HEIGHT-block_size*5 + 32, 32, 32)
     mushroom1 = Mushroom(19*block_size + 16, HEIGHT-block_size*6 + 32, 32, 32)
-    end = End(28*block_size, HEIGHT - block_size*6 - 32, block_size * 2)
+    mushroom2 = Mushroom(28*block_size + 16, HEIGHT-block_size*6 + 32, 32, 32)
+    end = End(33*block_size, HEIGHT - block_size*8 - 32, block_size * 2)
     
-    fires = [Fire(4*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(5*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(7*block_size+32,HEIGHT - block_size - 64, 16, 32 ),
-             Fire(8*block_size+32,HEIGHT - block_size - 64, 16, 32 ),Fire(22*block_size+32,HEIGHT - block_size*6 - 64, 16, 32 )]
+    #fires = [Fire(4*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(5*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(7*block_size+32,HEIGHT - block_size - 64, 16, 32 ),
+             #Fire(8*block_size+32,HEIGHT - block_size - 64, 16, 32 ),Fire(22*block_size+32,HEIGHT - block_size*6 - 64, 16, 32 )]
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(1, (WIDTH * 5) // block_size)]
+    fires = [Fire(i * block_size + 32, HEIGHT - block_size - 64, 16, 32) for i in range(4, (WIDTH * 4) // block_size)]
+    sky_fire = Fire(22*block_size+32,HEIGHT - block_size*6 - 64, 16, 32 )
+    fires.append(sky_fire)
     wall = [Brick(0, i * block_size, block_size) for i in range(HEIGHT // block_size)]
-    end_wall = [Brick(block_size * 52, i * block_size, block_size) for i in range(HEIGHT // block_size)]
+    end_wall = [Brick(block_size * 35, i * block_size, block_size) for i in range(HEIGHT // block_size)]
     blocks = [  Block(3*block_size, HEIGHT -  block_size*2 , block_size), Block(6*block_size, HEIGHT - block_size*4, block_size) , Block(9*block_size, HEIGHT - block_size*4, block_size) ,
                 Block(10*block_size, HEIGHT - block_size*4, block_size), Block(11*block_size, HEIGHT - block_size*4, block_size), Block(13*block_size, HEIGHT - block_size*6, block_size),
                 Block(16*block_size, HEIGHT - block_size*7, block_size), Block(18*block_size, HEIGHT - block_size*5, block_size), Block(19*block_size, HEIGHT - block_size*5, block_size), 
                 Block(20*block_size, HEIGHT - block_size*5, block_size), Block(22*block_size, HEIGHT - block_size*6, block_size), Block(22*block_size, HEIGHT - block_size*9, block_size), 
-                Block(24*block_size, HEIGHT - block_size*6, block_size), Block(27*block_size, HEIGHT - block_size*5, block_size), Block(28*block_size, HEIGHT - block_size*5, block_size)]
-    objects = [*floor,*wall, *blocks, *fires, end, *end_wall, mushroom, mushroom1 ]
+                Block(24*block_size, HEIGHT - block_size*6, block_size), Block(27*block_size, HEIGHT - block_size*5, block_size), Block(28*block_size, HEIGHT - block_size*5, block_size),
+                Block(29*block_size, HEIGHT - block_size*5, block_size), Block(32*block_size, HEIGHT - block_size*7, block_size), Block(33*block_size, HEIGHT - block_size*7, block_size),]
+    objects = [*floor,*wall, *blocks, *fires, end, *end_wall, mushroom, mushroom1, mushroom2]
 
     
     scroll_area_width = 200
@@ -514,6 +519,7 @@ def main(window):
         player.loop(FPS)
         mushroom.loop()
         mushroom1.loop()
+        mushroom2.loop()
         for fire in fires:
             fire.loop()
         handle_move(player, objects)
