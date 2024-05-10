@@ -2,6 +2,7 @@ import os
 import random
 import math
 import pygame
+from network import Network
 from os import listdir
 from os.path import isfile, join
 pygame.init()
@@ -11,7 +12,7 @@ pygame.display.set_caption("Platformer")
 
 WIDTH, HEIGHT = 1000, 800
 
-FPS = 60
+FPS = 500
 PLAYER_VEL = 5
 
 window = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -72,15 +73,39 @@ def get_end(size):
     surface.blit(image, (0, 0), rect)
     return pygame.transform.scale2x(surface)
 
+class Button:
+    def __init__(self, text, x, y, color):
+        self.text = text
+        self.x = x
+        self.y = y
+        self.color = color
+        self.width = 150
+        self.height = 100
+
+    def draw(self, win):
+        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
+        font = pygame.font.SysFont("comicsans", 40)
+        text = font.render(self.text, 1, (255,255,255))
+        win.blit(text, (self.x + round(self.width/2) - round(text.get_width()/2), self.y + round(self.height/2) - round(text.get_height()/2)))
+
+    def click(self,pos):
+        x1 = pos[0]
+        y1 = pos[1]
+        if self.x <= x1 <= self.x + self.width and self.y <= y1 <= self.y + self.height:
+            return True
+        else:
+            return False
+
 class Player(pygame.sprite.Sprite):
     
     
     GRAVITY = 1
-    SPRITES = load_sprite_sheets("MainCharacters", "NinjaFrog", 32, 32, True)
+    
     ANIMATION_DELAY = 3
 
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, character):
         super().__init__()
+        self.SPRITES = load_sprite_sheets("MainCharacters", character, 32, 32, True)
         self.rect = pygame.Rect(x, y, width, height)
         self.x_vel = 0
         self.y_vel = 0
@@ -92,6 +117,8 @@ class Player(pygame.sprite.Sprite):
         self.hit = False
         self.hit_count = 0
         self.die = False
+        self.win = 0
+        self.ready = 0
 
     def jump(self):
         self.y_vel = -self.GRAVITY*8
@@ -175,7 +202,6 @@ class Player(pygame.sprite.Sprite):
         self.hit_count = 0
         self.animation_count = 0
         self.update()
-
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft = (self.rect.x, self.rect.y))
@@ -284,14 +310,29 @@ def get_background(name):
 
     return tiles, image
 
-def draw(window, background, bg_image, player, objects, offset_x):
-    for tile in background:
-        window.blit(bg_image, tile)
+def draw(window, background, bg_image, player,player2, objects, offset_x):
+    if player2.ready == 0:
+        font = pygame.font.SysFont("comicsans", 100)
+        text = font.render("Waiting for Player 2", 1, (255, 0, 0))
+        border = pygame.Rect(WIDTH // 2 - text.get_width() // 2 - 10, HEIGHT // 2 - text.get_height() // 2 - 10, text.get_width() + 20, text.get_height() + 20)
+        pygame.draw.rect(window, (255,255,255), border)
+        window.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+     
+    elif player2.ready == -1:
+        font = pygame.font.SysFont("comicsans", 100)
+        text = font.render("P2 Disconnected", 1, (255, 0, 0))
+        window.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+      
+                       
+    else:
+        for tile in background:
+            window.blit(bg_image, tile)
 
-    for obj in objects:
-        obj.draw(window, offset_x)
+        for obj in objects:
+            obj.draw(window, offset_x)
 
-    player.draw(window, offset_x)
+        player2.draw(window, offset_x)
+        player.draw(window, offset_x)
 
     pygame.display.update()
 
@@ -345,15 +386,45 @@ def handle_move(player, objects):
     for obj in to_check:
         if obj and obj.name == "end":
             finish_sfx.play()
-            pygame.time.wait(1000)
-            player.respawn()
+            player.win = 1
+       
+            
+def handle_move_p2(player, objects):
+    keys = pygame.key.get_pressed()
+
+    player.x_vel = 0
+    collide_left = collide(player, objects, -PLAYER_VEL * 2)
+    collide_right = collide(player, objects, PLAYER_VEL * 2)
+    if keys[pygame.K_a] and not collide_left:
+        player.move_left(PLAYER_VEL)
+
+    if keys[pygame.K_d] and not collide_right:
+        player.move_right(PLAYER_VEL)
+        
+    vertical_collide = handle_vertical_collision(player, objects, player.y_vel)
+    to_check = [collide_left, collide_right] + vertical_collide
+   
+
+def read_pos(str):
+    str = str.split(",")
+    return (int(str[0]), int(str[1]), str[2], int(str[3]), int(str[4]), float(str[5]), int(str[6]), int(str[7]))
+
+def make_pos(tup):
+    return str(tup[0]) + "," + str(tup[1]) + "," + tup[2] + "," + str(tup[3]) + "," + str(tup[4]) + "," + str(tup[5]) + "," + str(tup[6]) + "," + str(tup[7])
+
+
+
 def main(window):
+
     clock = pygame.time.Clock()
     background, bg_image = get_background("Yellow.png")
     
     block_size = 96
     offset_x = 0
-    player = Player(96, HEIGHT-96, 50, 50)
+    n = Network()
+    startPos = read_pos(n.get_pos())
+    player = Player(startPos[0], startPos[1], 50, 50, "NinjaFrog")
+    player2 = Player(startPos[0], startPos[1], 50, 50, "PinkMan")
     mushroom = Mushroom(10*block_size + 16, HEIGHT-block_size*5 + 32, 32, 32)
     mushroom1 = Mushroom(19*block_size + 16, HEIGHT-block_size*6 + 32, 32, 32)
     end = End(28*block_size, HEIGHT - block_size*6 - 32, block_size * 2)
@@ -363,7 +434,7 @@ def main(window):
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(1, (WIDTH * 5) // block_size)]
     wall = [Brick(0, i * block_size, block_size) for i in range(HEIGHT // block_size)]
     end_wall = [Brick(block_size * 52, i * block_size, block_size) for i in range(HEIGHT // block_size)]
-    blocks = [  Block(3*block_size, HEIGHT - block_size*2 , block_size), Block(6*block_size, HEIGHT - block_size*4, block_size) , Block(9*block_size, HEIGHT - block_size*4, block_size) ,
+    blocks = [  Block(3*block_size, HEIGHT -  block_size*2 , block_size), Block(6*block_size, HEIGHT - block_size*4, block_size) , Block(9*block_size, HEIGHT - block_size*4, block_size) ,
                 Block(10*block_size, HEIGHT - block_size*4, block_size), Block(11*block_size, HEIGHT - block_size*4, block_size), Block(13*block_size, HEIGHT - block_size*6, block_size),
                 Block(16*block_size, HEIGHT - block_size*7, block_size), Block(18*block_size, HEIGHT - block_size*5, block_size), Block(19*block_size, HEIGHT - block_size*5, block_size), 
                 Block(20*block_size, HEIGHT - block_size*5, block_size), Block(22*block_size, HEIGHT - block_size*6, block_size), Block(22*block_size, HEIGHT - block_size*9, block_size), 
@@ -372,25 +443,82 @@ def main(window):
 
     
     scroll_area_width = 200
+
+    menu = True
+    while menu:
+        window.fill((255,255,255))
+        font = pygame.font.SysFont("comicsans", 60)
+        text = font.render("Press any key to start...", 1, (0,0,0), (255,255,255))
+        window.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                player.ready = 1
+                menu = False
+
     run = True
     while run:
         clock.tick(FPS)
+        
+        p2Pos = read_pos(n.send(make_pos((player.rect.x, player.rect.y, player.direction, player.jump_count, player.x_vel, player.y_vel, player.win, player.ready))))
+        player2.rect.x = p2Pos[0]
+        player2.rect.y = p2Pos[1]
+        player2.direction = p2Pos[2]
+        player2.jump_count = p2Pos[3]
+        player2.x_vel = p2Pos[4]
+        player2.y_vel = p2Pos[5]
+        player2.win = p2Pos[6]
+        player2.ready = p2Pos[7]
+        
+        if player.win == 1:
+            font = pygame.font.SysFont("comicsans", 100)
+            text = font.render("You Won!", 1, (255, 0, 0))
+            border = pygame.Rect(WIDTH // 2 - text.get_width() // 2 - 10, HEIGHT // 2 - text.get_height() // 2 - 10, text.get_width() + 20, text.get_height() + 20)
+            pygame.draw.rect(window, (255,255,255), border)
+            window.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+            pygame.display.update()
+            pygame.time.delay(5000)
+            player.win = 0
+            player2.win = 0
+            offset_x = 0
+            player.respawn()
+            player2.respawn()
+        if player2.win == 1:
+            font = pygame.font.SysFont("comicsans", 100)
+            text = font.render("Player 2 Won!", 1, (255, 0, 0))
+            border = pygame.Rect(WIDTH // 2 - text.get_width() // 2 - 10, HEIGHT // 2 - text.get_height() // 2 - 10, text.get_width() + 20, text.get_height() + 20)
+            pygame.draw.rect(window, (255,255,255), border)
+            window.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+            pygame.display.update()
+            pygame.time.delay(5000)
+            player.win = 0
+            player2.win = 0
+            offset_x = 0
+            player.respawn()
+            player2.respawn()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+                player.ready = -1
+                n.send(make_pos((player.rect.x, player.rect.y, player.direction, player.jump_count, player.x_vel, player.y_vel, player.win, player.ready)))
                 break
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and player.jump_count < 2:
                     player.jump()
                     jump_sfx.play()
+        player2.loop(FPS)
         player.loop(FPS)
         mushroom.loop()
         mushroom1.loop()
         for fire in fires:
             fire.loop()
         handle_move(player, objects)
-        draw(window, background, bg_image, player, objects, offset_x)
+        handle_move_p2(player2, objects)
+        draw(window, background, bg_image, player,player2, objects, offset_x)
 
         if  (player.rect.right - offset_x >= WIDTH - scroll_area_width and player.x_vel > 0) or (player.rect.left - offset_x <= scroll_area_width and player.x_vel < 0):
             offset_x += player.x_vel
@@ -398,8 +526,10 @@ def main(window):
             player.die = False
             offset_x = 0
             player.respawn()
+
     pygame.quit()
     quit()
+
 
 if __name__ == "__main__":
     main(window)
