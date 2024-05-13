@@ -20,7 +20,6 @@ def read_pos(str):
     str = str.split(",")
     return (int(str[0]), int(str[1]), str[2], int(str[3]), int(str[4]), float(str[5]), int(str[6]), int(str[7]))
 
-
 def make_pos(tup):
     return str(tup[0]) + "," + str(tup[1]) + "," + tup[2] + "," + str(tup[3]) + "," + str(tup[4]) + "," + str(tup[5]) + "," + str(tup[6]) + "," + str(tup[7])
     

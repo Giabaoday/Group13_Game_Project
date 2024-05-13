@@ -430,8 +430,6 @@ def main(window):
     mushroom2 = Mushroom(28*block_size + 16, HEIGHT-block_size*6 + 32, 32, 32)
     end = End(33*block_size, HEIGHT - block_size*8 - 32, block_size * 2)
     
-    #fires = [Fire(4*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(5*block_size+32,HEIGHT - block_size - 64, 16, 32 ), Fire(7*block_size+32,HEIGHT - block_size - 64, 16, 32 ),
-             #Fire(8*block_size+32,HEIGHT - block_size - 64, 16, 32 ),Fire(22*block_size+32,HEIGHT - block_size*6 - 64, 16, 32 )]
     floor = [Block(i * block_size, HEIGHT - block_size, block_size) for i in range(1, (WIDTH * 5) // block_size)]
     fires = [Fire(i * block_size + 32, HEIGHT - block_size - 64, 16, 32) for i in range(4, (WIDTH * 4) // block_size)]
     sky_fire = Fire(22*block_size+32,HEIGHT - block_size*6 - 64, 16, 32 )
