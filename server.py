@@ -1,7 +1,7 @@
 import socket
 from _thread import *
 import sys
-import pickle
+
 
 server = "127.0.0.1"
 port = 5555
